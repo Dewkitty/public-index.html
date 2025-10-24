@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- Instant favicon to prevent endless loading spinner in some browsers -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cpath d='M14 34h22a8 8 0 0 0 8-8v0' stroke='%23fff' stroke-width='6' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='22' cy='42' r='4' fill='%23fff'/%3E%3Ccircle cx='34' cy='42' r='4' fill='%23fff'/%3E%3C/svg%3E" />
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Quotation Maker</title>
@@ -167,7 +169,7 @@
         <div class="toolbar no-print" style="margin-top: 12px;">
           <button class="btn" id="saveQuoteBtn">Save Quote (Local)</button>
           <button class="btn" id="loadQuoteBtn">Load Quote</button>
-          <button class="btn primary" id="printBtn">Print / Save PDF</button>
+          <button class="btn primary" id="printBtn" onclick="window.print()">Print / Save PDF</button>
           <button class="btn ghost" id="exportJSONBtn">Export JSON</button>
           <input type="file" id="importJSONInput" accept="application/json" style="display:none;" />
           <button class="btn" id="importJSONBtn">Import JSON</button>

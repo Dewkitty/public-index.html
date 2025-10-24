@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quotation Maker</title>
+  <style>
+    :root {
+      --ink:#0f172a; --muted:#64748b; --accent:#2563eb; --bg:#f8fafc; --card:#ffffff; --border:#e2e8f0;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
+      color: var(--ink); background: var(--bg);
+    }
+    .container { max-width: 1100px; margin: 24px auto; padding: 16px; }
+    .card { background: var(--card); border:1px solid var(--border); border-radius: 14px; box-shadow: 0 6px 20px rgba(15,23,42,.04); }
+    .row { display:flex; gap: 16px; }
+    .col { flex:1; min-width: 0; }
+    header { display:flex; align-items:center; justify-content:space-between; gap: 16px; margin-bottom: 16px; }
+    h1 { font-size: 22px; margin: 0; }
+    .tabs { display:flex; gap:8px; flex-wrap: wrap; }
+    .tab { border:1px solid var(--border); background: #fff; padding:8px 12px; border-radius: 999px; cursor:pointer; font-weight:600; }
+    .tab.active { background: var(--ink); color:#fff; border-color: var(--ink); }
+    .section { padding: 16px; }
+    .section h2 { font-size: 16px; margin: 0 0 8px; color:#0b1220; }
+    label { font-size: 12px; color: var(--muted); display:block; margin-bottom: 6px; }
+    input[type="text"], input[type="number"], input[type="date"], textarea { width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:10px; background:#fff; outline:none; }
+    textarea { min-height: 80px; resize: vertical; }
+    input:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,.15); }
+    .btn { display:inline-flex; align-items:center; gap:8px; border:1px solid var(--border); padding:10px 14px; border-radius:10px; background:#fff; cursor:pointer; font-weight:600; }
+    .btn.primary { background: var(--accent); color:#fff; border-color: var(--accent); }
+    .btn.warn { background:#ef4444; color:#fff; border-color:#ef4444; }
+    .btn.ghost { background:transparent; }
+    .btn:disabled { opacity:.5; cursor:not-allowed; }
+    .toolbar { display:flex; flex-wrap: wrap; gap:8px; }
+    table { width:100%; border-collapse: collapse; }
+    th, td { border-bottom:1px solid var(--border); padding:8px; text-align:left; vertical-align: top; }
+    th { font-size:12px; color: var(--muted); font-weight:700; }
+    td img.thumb { width:56px; height:56px; object-fit:cover; border-radius:8px; border:1px solid var(--border); background:#fff; }
+    .right { text-align:right; }
+    .muted { color: var(--muted); }
+    .pill { display:inline-block; padding:2px 8px; border-radius:999px; background:#eef2ff; color:#3730a3; font-size:12px; font-weight:700; }
+    .totals { max-width: 420px; margin-left:auto; }
+    .totals .row { align-items:center; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+    .grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
+
+    /* Print styles */
+    @media print {
+      body { background: #fff; }
+      .no-print { display:none !important; }
+      .container { max-width: 100%; margin: 0; padding: 0; }
+      .card { border: 0; box-shadow: none; border-radius: 0; }
+      .section { padding: 0; }
+      .quote-paper { padding: 18mm 14mm; }
+      header, .tabs { display: none; }
+      .thumb { width: 40px; height: 40px; }
+      th, td { padding:6px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="no-print">
+      <h1>Quotation Maker</h1>
+      <div class="tabs">
+        <button class="tab active" data-tab="quoteTab">Quote</button>
+        <button class="tab" data-tab="catalogTab">Catalog</button>
+        <button class="tab" data-tab="settingsTab">Settings</button>
+      </div>
+    </header>
+
+    <div id="quoteTab" class="card">
+      <div class="section quote-paper">
+        <div class="row" style="align-items:flex-start; margin-bottom: 16px;">
+          <div class="col">
+            <div style="display:flex; gap:12px; align-items:center;">
+              <img id="companyLogoPreview" src="" alt="Logo" style="width:52px; height:52px; object-fit:cover; border-radius:10px; border:1px solid var(--border); background:#fff;"/>
+              <div>
+                <div id="companyNameDisplay" style="font-size:18px; font-weight:800;">Your Company</div>
+                <div id="companyContactsDisplay" class="muted" style="font-size:12px; white-space: pre-wrap;"></div>
+              </div>
+            </div>
+          </div>
+          <div class="col right">
+            <div class="pill">QUOTATION</div>
+            <div style="margin-top:8px; font-size:12px;">
+              <div><strong>No:</strong> <span id="quoteNoDisplay">Q-0001</span></div>
+              <div><strong>Date:</strong> <span id="quoteDateDisplay"></span></div>
+              <div><strong>Valid Until:</strong> <span id="validUntilDisplay"></span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row" style="margin-bottom: 12px;">
+          <div class="col">
+            <label>Customer Name</label>
+            <input id="customerName" type="text" placeholder="Customer / Company" />
+          </div>
+          <div class="col">
+            <label>Customer Contact / Address</label>
+            <input id="customerAddress" type="text" placeholder="Phone / Email / Address" />
+          </div>
+        </div>
+
+        <div class="row" style="margin-bottom: 16px;">
+          <div class="col">
+            <label>Quote No.</label>
+            <input id="quoteNo" type="text" placeholder="Q-0001" />
+          </div>
+          <div class="col">
+            <label>Date</label>
+            <input id="quoteDate" type="date" />
+          </div>
+          <div class="col">
+            <label>Valid Until</label>
+            <input id="validUntil" type="date" />
+          </div>
+        </div>
+
+        <div class="toolbar no-print" style="margin-bottom: 8px;">
+          <input id="itemSearch" type="text" placeholder="Search catalog... (type item name or SKU)" style="flex:1;" />
+          <button class="btn" id="addSelectedBtn">Add Selected</button>
+          <button class="btn" id="clearQuoteBtn">Clear Quote</button>
+        </div>
+
+        <div class="card" style="border-radius: 12px; overflow:hidden; margin-bottom: 10px;">
+          <table id="itemsTable">
+            <thead>
+              <tr>
+                <th style="width:60px;">Image</th>
+                <th>Item</th>
+                <th class="right">Price</th>
+                <th class="right">Qty</th>
+                <th class="right">Disc %</th>
+                <th class="right">Line Total</th>
+                <th class="no-print right" style="width: 80px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="itemsBody"></tbody>
+          </table>
+        </div>
+
+        <div class="row" style="align-items:flex-start; gap: 24px;">
+          <div class="col">
+            <label>Notes / Terms</label>
+            <textarea id="notes" placeholder="Delivery, warranty, payment terms..."></textarea>
+          </div>
+          <div class="col">
+            <div class="totals">
+              <div class="row"><div class="col right muted">Subtotal</div><div class="col right mono" id="subtotal">0.00</div></div>
+              <div class="row"><div class="col right muted">Total Discount</div><div class="col right mono" id="discountTotal">0.00</div></div>
+              <div class="row" style="align-items:center; gap:8px;">
+                <div class="col right muted">Tax %</div>
+                <div class="col right"><input id="taxPercent" type="number" step="0.01" value="0" style="max-width:100px; text-align:right;"/></div>
+              </div>
+              <div class="row"><div class="col right muted">Tax Amount</div><div class="col right mono" id="taxAmount">0.00</div></div>
+              <div class="row" style="font-weight:800; font-size:18px;">
+                <div class="col right">Grand Total</div><div class="col right mono" id="grandTotal">0.00</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="toolbar no-print" style="margin-top: 12px;">
+          <button class="btn" id="saveQuoteBtn">Save Quote (Local)</button>
+          <button class="btn" id="loadQuoteBtn">Load Quote</button>
+          <button class="btn primary" id="printBtn">Print / Save PDF</button>
+          <button class="btn ghost" id="exportJSONBtn">Export JSON</button>
+          <input type="file" id="importJSONInput" accept="application/json" style="display:none;" />
+          <button class="btn" id="importJSONBtn">Import JSON</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="catalogTab" class="card" style="display:none;">
+      <div class="section">
+        <div class="row" style="margin-bottom: 12px; align-items:flex-end;">
+          <div class="col">
+            <h2>Item Catalog</h2>
+            <div class="muted">Add items with price and image URL. These appear in the quote builder.</div>
+          </div>
+          <div class="col right toolbar">
+            <button class="btn" id="addItemBtn">Add Item</button>
+            <button class="btn" id="exportCSVBtn">Export CSV</button>
+            <input type="file" id="importCSVInput" accept="text/csv" style="display:none;" />
+            <button class="btn" id="importCSVBtn">Import CSV</button>
+          </div>
+        </div>
+
+        <div class="card" style="border-radius:12px; overflow:hidden;">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:60px;">Image</th>
+                <th>Name</th>
+                <th>SKU</th>
+                <th class="right">Price</th>
+                <th class="right">Default Disc %</th>
+                <th class="no-print right" style="width:100px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="catalogBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="settingsTab" class="card" style="display:none;">
+      <div class="section">
+        <h2>Settings</h2>
+        <div class="grid" style="margin-top:8px;">
+          <div>
+            <label>Company Name</label>
+            <input id="companyName" type="text" placeholder="Mercuri Holdings" />
+          </div>
+          <div>
+            <label>Logo URL</label>
+            <input id="companyLogo" type="text" placeholder="https://.../logo.png" />
+          </div>
+          <div>
+            <label>Company Contact / Address</label>
+            <textarea id="companyContacts" placeholder="Address, Phone, Email"></textarea>
+          </div>
+          <div>
+            <label>Currency (prefix)</label>
+            <input id="currencySymbol" type="text" placeholder="LKR " />
+          </div>
+        </div>
+        <div class="toolbar" style="margin-top:12px;">
+          <button class="btn primary" id="saveSettingsBtn">Save Settings</button>
+          <button class="btn" id="resetAllBtn">Reset All (Clear Local Data)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- Simple state helpers ---
+    const $ = (sel) => document.querySelector(sel);
+    const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+    const fmt = (n) => {
+      const sym = (localStorage.getItem('currencySymbol') || 'LKR ').trim() + ' ';
+      const num = (Number(n)||0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      return sym + num;
+    };
+
+    const state = {
+      catalog: [], // {id, name, sku, price, discount, image}
+      quote: { items: [], notes:"", taxPercent:0, customerName:"", customerAddress:"", quoteNo:"Q-0001", date:"", validUntil:"" },
+    };
+
+    const saveAll = () => {
+      localStorage.setItem('catalog', JSON.stringify(state.catalog));
+      localStorage.setItem('quote', JSON.stringify(state.quote));
+    };
+
+    const loadAll = () => {
+      const c = localStorage.getItem('catalog');
+      const q = localStorage.getItem('quote');
+      if (c) state.catalog = JSON.parse(c); else state.catalog = [];
+      if (q) state.quote = JSON.parse(q); else state.quote = { items: [], notes:"", taxPercent:0, customerName:"", customerAddress:"", quoteNo:"Q-0001", date:"", validUntil:"" };
+    };
+
+    const uid = () => Math.random().toString(36).slice(2,9);
+
+    // --- Tabs ---
+    $$('.tab').forEach(btn => btn.addEventListener('click', () => {
+      $$('.tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      ['quoteTab','catalogTab','settingsTab'].forEach(id => { $('#'+id).style.display = (btn.dataset.tab===id)?'block':'none'; });
+    }));
+
+    // --- Renderers ---
+    function renderSettings() {
+      $('#companyName').value = localStorage.getItem('companyName') || 'Your Company';
+      $('#companyLogo').value = localStorage.getItem('companyLogo') || '';
+      $('#companyContacts').value = localStorage.getItem('companyContacts') || '';
+      $('#currencySymbol').value = localStorage.getItem('currencySymbol') || 'LKR ';
+
+      $('#companyNameDisplay').textContent = localStorage.getItem('companyName') || 'Your Company';
+      $('#companyContactsDisplay').textContent = localStorage.getItem('companyContacts') || '';
+      const logo = localStorage.getItem('companyLogo') || '';
+      $('#companyLogoPreview').src = logo || '';
+    }
+
+    function renderCatalog() {
+      const tbody = $('#catalogBody');
+      tbody.innerHTML = '';
+      state.catalog.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><img class="thumb" src="${item.image||''}" alt="" onerror="this.src='';"></td>
+          <td><input type="text" value="${item.name||''}" data-field="name" data-id="${item.id}"></td>
+          <td><input type="text" value="${item.sku||''}" data-field="sku" data-id="${item.id}"></td>
+          <td class="right"><input type="number" step="0.01" value="${item.price||0}" data-field="price" data-id="${item.id}" style="max-width:120px; text-align:right;"></td>
+          <td class="right"><input type="number" step="0.01" value="${item.discount||0}" data-field="discount" data-id="${item.id}" style="max-width:100px; text-align:right;"></td>
+          <td class="right no-print">
+            <button class="btn" data-action="addToQuote" data-id="${item.id}">Add</button>
+            <button class="btn warn" data-action="deleteItem" data-id="${item.id}">Del</button>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderQuote() {
+      // header fields
+      $('#customerName').value = state.quote.customerName||'';
+      $('#customerAddress').value = state.quote.customerAddress||'';
+      $('#quoteNo').value = state.quote.quoteNo||'Q-0001';
+      $('#quoteDate').value = state.quote.date||new Date().toISOString().slice(0,10);
+      $('#validUntil').value = state.quote.validUntil||'';
+      $('#quoteNoDisplay').textContent = $('#quoteNo').value;
+      $('#quoteDateDisplay').textContent = $('#quoteDate').value;
+      $('#validUntilDisplay').textContent = $('#validUntil').value || '-';
+
+      $('#notes').value = state.quote.notes||'';
+      $('#taxPercent').value = Number(state.quote.taxPercent||0);
+
+      const tbody = $('#itemsBody');
+      tbody.innerHTML = '';
+
+      let subtotal = 0, discountTotal = 0;
+
+      state.quote.items.forEach((row, idx) => {
+        const price = Number(row.price||0);
+        const qty = Number(row.qty||1);
+        const disc = Number(row.discount||0);
+        const lineBase = price * qty;
+        const lineDiscAmt = lineBase * (disc/100);
+        const lineTotal = lineBase - lineDiscAmt;
+        subtotal += lineBase;
+        discountTotal += lineDiscAmt;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><img class="thumb" src="${row.image||''}" alt="" onerror="this.src='';"></td>
+          <td>
+            <div style="font-weight:700;">${row.name||''}</div>
+            <div class="muted" style="font-size:12px;">${row.sku||''}</div>
+          </td>
+          <td class="right">
+            <input type="number" step="0.01" value="${price}" data-row="${idx}" data-field="price" style="max-width:110px; text-align:right;">
+          </td>
+          <td class="right">
+            <input type="number" step="1" value="${qty}" data-row="${idx}" data-field="qty" style="max-width:90px; text-align:right;">
+          </td>
+          <td class="right">
+            <input type="number" step="0.01" value="${disc}" data-row="${idx}" data-field="discount" style="max-width:90px; text-align:right;">
+          </td>
+          <td class="right mono">${fmt(lineTotal)}</td>
+          <td class="right no-print">
+            <button class="btn" data-action="duplicateRow" data-idx="${idx}">Dup</button>
+            <button class="btn warn" data-action="removeRow" data-idx="${idx}">Remove</button>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+
+      const taxPercent = Number(state.quote.taxPercent||0);
+      const taxable = subtotal - discountTotal;
+      const taxAmount = taxable * (taxPercent/100);
+      const grand = taxable + taxAmount;
+
+      $('#subtotal').textContent = fmt(subtotal);
+      $('#discountTotal').textContent = fmt(discountTotal);
+      $('#taxAmount').textContent = fmt(taxAmount);
+      $('#grandTotal').textContent = fmt(grand);
+
+      // live search suggestions
+      const q = $('#itemSearch').value.trim().toLowerCase();
+      if (q) {
+        const found = state.catalog.filter(it => (it.name||'').toLowerCase().includes(q) || (it.sku||'').toLowerCase().includes(q));
+        $('#addSelectedBtn').disabled = found.length === 0;
+      } else {
+        $('#addSelectedBtn').disabled = true;
+      }
+    }
+
+    // --- Event wiring ---
+    function wireCatalogEvents() {
+      $('#catalogBody').addEventListener('input', (e) => {
+        const id = e.target.getAttribute('data-id');
+        const field = e.target.getAttribute('data-field');
+        const item = state.catalog.find(i => i.id === id);
+        if (!item) return;
+        item[field] = (field==='price' || field==='discount') ? Number(e.target.value||0) : e.target.value;
+        saveAll();
+      });
+      $('#catalogBody').addEventListener('click', (e) => {
+        const id = e.target.getAttribute('data-id');
+        const action = e.target.getAttribute('data-action');
+        if (!action) return;
+        if (action==='deleteItem') {
+          state.catalog = state.catalog.filter(i => i.id !== id);
+          saveAll(); renderCatalog();
+        }
+        if (action==='addToQuote') {
+          const it = state.catalog.find(i => i.id===id);
+          if (it) {
+            state.quote.items.push({ name: it.name, sku: it.sku, price: it.price||0, qty:1, discount: it.discount||0, image: it.image||'' });
+            saveAll(); renderQuote();
+          }
+        }
+      });
+      $('#addItemBtn').addEventListener('click', () => {
+        state.catalog.push({ id: uid(), name:'New Item', sku:'', price:0, discount:0, image:'' });
+        saveAll(); renderCatalog();
+      });
+      $('#exportCSVBtn').addEventListener('click', exportCSV);
+      $('#importCSVBtn').addEventListener('click', () => $('#importCSVInput').click());
+      $('#importCSVInput').addEventListener('change', importCSV);
+    }
+
+    function wireQuoteEvents() {
+      $('#itemsBody').addEventListener('input', (e) => {
+        const idx = Number(e.target.getAttribute('data-row'));
+        const field = e.target.getAttribute('data-field');
+        if (!Number.isInteger(idx)) return;
+        const row = state.quote.items[idx];
+        if (!row) return;
+        row[field] = (field==='price' || field==='qty' || field==='discount') ? Number(e.target.value||0) : e.target.value;
+        saveAll(); renderQuote();
+      });
+      $('#itemsBody').addEventListener('click', (e) => {
+        const idx = Number(e.target.getAttribute('data-idx'));
+        const action = e.target.getAttribute('data-action');
+        if (action==='removeRow') {
+          state.quote.items.splice(idx,1); saveAll(); renderQuote();
+        }
+        if (action==='duplicateRow') {
+          const r = state.quote.items[idx];
+          state.quote.items.splice(idx+1,0,{...r}); saveAll(); renderQuote();
+        }
+      });
+
+      $('#itemSearch').addEventListener('input', renderQuote);
+      $('#addSelectedBtn').addEventListener('click', () => {
+        const q = $('#itemSearch').value.trim().toLowerCase();
+        if (!q) return;
+        const found = state.catalog.filter(it => (it.name||'').toLowerCase().includes(q) || (it.sku||'').toLowerCase().includes(q));
+        found.forEach(it => state.quote.items.push({ name: it.name, sku: it.sku, price: it.price||0, qty:1, discount: it.discount||0, image: it.image||'' }));
+        $('#itemSearch').value='';
+        saveAll(); renderQuote();
+      });
+
+      $('#clearQuoteBtn').addEventListener('click', () => { if (confirm('Clear current quote?')) { state.quote.items=[]; saveAll(); renderQuote(); } });
+
+      $('#notes').addEventListener('input', (e) => { state.quote.notes = e.target.value; saveAll(); });
+      $('#taxPercent').addEventListener('input', (e) => { state.quote.taxPercent = Number(e.target.value||0); saveAll(); renderQuote(); });
+
+      $('#customerName').addEventListener('input', (e) => { state.quote.customerName = e.target.value; saveAll(); });
+      $('#customerAddress').addEventListener('input', (e) => { state.quote.customerAddress = e.target.value; saveAll(); });
+      $('#quoteNo').addEventListener('input', (e) => { state.quote.quoteNo = e.target.value; saveAll(); renderQuote(); });
+      $('#quoteDate').addEventListener('input', (e) => { state.quote.date = e.target.value; saveAll(); renderQuote(); });
+      $('#validUntil').addEventListener('input', (e) => { state.quote.validUntil = e.target.value; saveAll(); renderQuote(); });
+
+      $('#printBtn').addEventListener('click', () => window.print());
+
+      $('#saveQuoteBtn').addEventListener('click', () => { saveAll(); alert('Quote saved locally on this device.'); });
+      $('#loadQuoteBtn').addEventListener('click', () => { loadAll(); renderQuote(); alert('Loaded saved quote.'); });
+
+      $('#exportJSONBtn').addEventListener('click', exportJSON);
+      $('#importJSONBtn').addEventListener('click', () => $('#importJSONInput').click());
+      $('#importJSONInput').addEventListener('change', importJSON);
+    }
+
+    function wireSettingsEvents() {
+      $('#saveSettingsBtn').addEventListener('click', () => {
+        localStorage.setItem('companyName', $('#companyName').value.trim()||'Your Company');
+        localStorage.setItem('companyLogo', $('#companyLogo').value.trim());
+        localStorage.setItem('companyContacts', $('#companyContacts').value.trim());
+        localStorage.setItem('currencySymbol', $('#currencySymbol').value.trim()||'LKR ');
+        renderSettings(); saveAll(); alert('Settings saved.');
+      });
+      $('#resetAllBtn').addEventListener('click', () => {
+        if (!confirm('This will clear catalog, quote, and settings stored in this browser. Continue?')) return;
+        localStorage.clear(); state.catalog=[]; state.quote={ items:[], notes:"", taxPercent:0, customerName:"", customerAddress:"", quoteNo:"Q-0001", date:"", validUntil:"" };
+        renderSettings(); renderCatalog(); renderQuote();
+      });
+    }
+
+    // --- CSV helpers ---
+    function exportCSV() {
+      const rows = [["name","sku","price","discount","image"]];
+      state.catalog.forEach(it => rows.push([it.name||'', it.sku||'', it.price||0, it.discount||0, it.image||'']));
+      const csv = rows.map(r => r.map(v => '"'+String(v).replaceAll('"','""')+'"').join(',')).join('\n');
+      const blob = new Blob([csv], {type:'text/csv'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href=url; a.download='catalog.csv'; a.click(); URL.revokeObjectURL(url);
+    }
+
+    function importCSV(e) {
+      const file = e.target.files[0]; if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const text = reader.result; const lines = text.split(/\r?\n/).filter(Boolean);
+        const header = lines.shift().split(',').map(h => h.replaceAll('"','').trim().toLowerCase());
+        const idx = (k)=> header.indexOf(k);
+        lines.forEach(line => {
+          const cols = line.match(/(?:\"([^\"]*(?:\"\"[^\"]*)*)\"|[^,]+)/g).map(s=>s.replaceAll(/^\"|\"$/g,'').replaceAll('""','"'));
+          const it = { id: uid(), name: cols[idx('name')]||'', sku: cols[idx('sku')]||'', price: Number(cols[idx('price')]||0), discount: Number(cols[idx('discount')]||0), image: cols[idx('image')]||'' };
+          state.catalog.push(it);
+        });
+        saveAll(); renderCatalog(); alert('Catalog imported.');
+        e.target.value = '';
+      };
+      reader.readAsText(file);
+    }
+
+    // --- JSON helpers ---
+    function exportJSON() {
+      const payload = { settings: {
+        companyName: localStorage.getItem('companyName')||'',
+        companyLogo: localStorage.getItem('companyLogo')||'',
+        companyContacts: localStorage.getItem('companyContacts')||'',
+        currencySymbol: localStorage.getItem('currencySymbol')||'LKR '
+      }, catalog: state.catalog, quote: state.quote };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href=url; a.download='quotation_data.json'; a.click(); URL.revokeObjectURL(url);
+    }
+
+    function importJSON(e) {
+      const file = e.target.files[0]; if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const payload = JSON.parse(reader.result);
+          if (payload.settings) {
+            for (const [k,v] of Object.entries(payload.settings)) localStorage.setItem(k, v);
+          }
+          if (Array.isArray(payload.catalog)) state.catalog = payload.catalog.map(it => ({ id: it.id||uid(), name: it.name||'', sku: it.sku||'', price: Number(it.price||0), discount: Number(it.discount||0), image: it.image||'' }));
+          if (payload.quote) state.quote = payload.quote;
+          saveAll(); renderSettings(); renderCatalog(); renderQuote(); alert('Data imported.');
+        } catch(err) { alert('Invalid JSON file.'); }
+        e.target.value = '';
+      };
+      reader.readAsText(file);
+    }
+
+    // --- Init ---
+    function seedIfEmpty() {
+      if (!state.catalog.length) {
+        state.catalog = [
+          { id: uid(), name: '12" Plastic Exhaust Fan - Square', sku: '245-5109', price: 8500, discount: 0, image: '' },
+          { id: uid(), name: 'LED Bulb 12W', sku: 'LED-12W', price: 650, discount: 0, image: '' },
+          { id: uid(), name: 'Modular Switch - 1 Gang', sku: 'SW-1G', price: 350, discount: 5, image: '' }
+        ];
+      }
+      if (!state.quote.date) state.quote.date = new Date().toISOString().slice(0,10);
+    }
+
+    loadAll(); seedIfEmpty();
+    renderSettings(); renderCatalog(); renderQuote();
+    wireCatalogEvents(); wireQuoteEvents(); wireSettingsEvents();
+  </script>
+</body>
+</html>
